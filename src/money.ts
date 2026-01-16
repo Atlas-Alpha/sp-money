@@ -130,6 +130,64 @@ export class Money {
     return new Money(total, currency);
   }
 
+  // Static comparison methods
+
+  static equals(a: Money, b: Money): boolean {
+    if (!currenciesMatch(a.#currency, b.#currency)) {
+      throw new Error(
+        `Cannot compare ${a.#currency.code} and ${b.#currency.code}: currency mismatch`
+      );
+    }
+    return a.#minor === b.#minor;
+  }
+
+  static compare(a: Money, b: Money): number {
+    if (!currenciesMatch(a.#currency, b.#currency)) {
+      throw new Error(
+        `Cannot compare ${a.#currency.code} and ${b.#currency.code}: currency mismatch`
+      );
+    }
+    if (a.#minor < b.#minor) return -1;
+    if (a.#minor > b.#minor) return 1;
+    return 0;
+  }
+
+  static lessThan(a: Money, b: Money): boolean {
+    if (!currenciesMatch(a.#currency, b.#currency)) {
+      throw new Error(
+        `Cannot compare ${a.#currency.code} and ${b.#currency.code}: currency mismatch`
+      );
+    }
+    return a.#minor < b.#minor;
+  }
+
+  static greaterThan(a: Money, b: Money): boolean {
+    if (!currenciesMatch(a.#currency, b.#currency)) {
+      throw new Error(
+        `Cannot compare ${a.#currency.code} and ${b.#currency.code}: currency mismatch`
+      );
+    }
+    return a.#minor > b.#minor;
+  }
+
+  static lessThanOrEqual(a: Money, b: Money): boolean {
+    if (!currenciesMatch(a.#currency, b.#currency)) {
+      throw new Error(
+        `Cannot compare ${a.#currency.code} and ${b.#currency.code}: currency mismatch`
+      );
+    }
+    return a.#minor <= b.#minor;
+  }
+
+  static greaterThanOrEqual(a: Money, b: Money): boolean {
+    if (!currenciesMatch(a.#currency, b.#currency)) {
+      throw new Error(
+        `Cannot compare ${a.#currency.code} and ${b.#currency.code}: currency mismatch`
+      );
+    }
+    return a.#minor >= b.#minor;
+  }
+
   // Instance method wrappers
 
   add(other: Money): Money {
@@ -138,5 +196,29 @@ export class Money {
 
   subtract(other: Money): Money {
     return Money.subtract(this, other);
+  }
+
+  equals(other: Money): boolean {
+    return Money.equals(this, other);
+  }
+
+  compare(other: Money): number {
+    return Money.compare(this, other);
+  }
+
+  lessThan(other: Money): boolean {
+    return Money.lessThan(this, other);
+  }
+
+  greaterThan(other: Money): boolean {
+    return Money.greaterThan(this, other);
+  }
+
+  lessThanOrEqual(other: Money): boolean {
+    return Money.lessThanOrEqual(this, other);
+  }
+
+  greaterThanOrEqual(other: Money): boolean {
+    return Money.greaterThanOrEqual(this, other);
   }
 }
