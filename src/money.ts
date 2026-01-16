@@ -7,6 +7,16 @@ export interface FromNumberOptions {
   strict?: boolean;
 }
 
+function currenciesMatch(a: CurrencyType, b: CurrencyType): boolean {
+  return a.code === b.code && a.decimalPlaces === b.decimalPlaces;
+}
+
+function assertSafeResult(value: bigint): void {
+  if (value > BigInt(Number.MAX_SAFE_INTEGER) || value < BigInt(-Number.MAX_SAFE_INTEGER)) {
+    throw new Error("Result too large: exceeds safe integer range");
+  }
+}
+
 export class Money {
   readonly #minor: bigint;
   readonly #currency: CurrencyType;
@@ -76,5 +86,57 @@ export class Money {
 
   toMinor(): number {
     return Number(this.#minor);
+  }
+
+  // Static arithmetic methods
+
+  static add(a: Money, b: Money): Money {
+    if (!currenciesMatch(a.#currency, b.#currency)) {
+      throw new Error(
+        `Cannot add ${a.#currency.code} and ${b.#currency.code}: currency mismatch`
+      );
+    }
+    const result = a.#minor + b.#minor;
+    assertSafeResult(result);
+    return new Money(result, a.#currency);
+  }
+
+  static subtract(a: Money, b: Money): Money {
+    if (!currenciesMatch(a.#currency, b.#currency)) {
+      throw new Error(
+        `Cannot subtract ${a.#currency.code} and ${b.#currency.code}: currency mismatch`
+      );
+    }
+    const result = a.#minor - b.#minor;
+    assertSafeResult(result);
+    return new Money(result, a.#currency);
+  }
+
+  static sum(items: Money[]): Money {
+    if (items.length === 0) {
+      throw new Error("Cannot sum empty array: at least one Money value required");
+    }
+    const currency = items[0].#currency;
+    let total = 0n;
+    for (const item of items) {
+      if (!currenciesMatch(item.#currency, currency)) {
+        throw new Error(
+          `Cannot sum ${currency.code} and ${item.#currency.code}: currency mismatch`
+        );
+      }
+      total += item.#minor;
+    }
+    assertSafeResult(total);
+    return new Money(total, currency);
+  }
+
+  // Instance method wrappers
+
+  add(other: Money): Money {
+    return Money.add(this, other);
+  }
+
+  subtract(other: Money): Money {
+    return Money.subtract(this, other);
   }
 }
