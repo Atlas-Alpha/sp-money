@@ -7,8 +7,10 @@ export interface FromNumberOptions {
   strict?: boolean;
 }
 
-function currenciesMatch(a: CurrencyType, b: CurrencyType): boolean {
-  return a.code === b.code && a.decimalPlaces === b.decimalPlaces;
+function assertCurrenciesMatch(a: CurrencyType, b: CurrencyType, operation: string): void {
+  if (a.code !== b.code || a.decimalPlaces !== b.decimalPlaces) {
+    throw new Error(`Cannot ${operation} ${a.code} and ${b.code}: currency mismatch`);
+  }
 }
 
 function assertSafeResult(value: bigint): void {
@@ -91,22 +93,14 @@ export class Money {
   // Static arithmetic methods
 
   static add(a: Money, b: Money): Money {
-    if (!currenciesMatch(a.#currency, b.#currency)) {
-      throw new Error(
-        `Cannot add ${a.#currency.code} and ${b.#currency.code}: currency mismatch`
-      );
-    }
+    assertCurrenciesMatch(a.#currency, b.#currency, "add");
     const result = a.#minor + b.#minor;
     assertSafeResult(result);
     return new Money(result, a.#currency);
   }
 
   static subtract(a: Money, b: Money): Money {
-    if (!currenciesMatch(a.#currency, b.#currency)) {
-      throw new Error(
-        `Cannot subtract ${a.#currency.code} and ${b.#currency.code}: currency mismatch`
-      );
-    }
+    assertCurrenciesMatch(a.#currency, b.#currency, "subtract");
     const result = a.#minor - b.#minor;
     assertSafeResult(result);
     return new Money(result, a.#currency);
@@ -119,11 +113,7 @@ export class Money {
     const currency = items[0].#currency;
     let total = 0n;
     for (const item of items) {
-      if (!currenciesMatch(item.#currency, currency)) {
-        throw new Error(
-          `Cannot sum ${currency.code} and ${item.#currency.code}: currency mismatch`
-        );
-      }
+      assertCurrenciesMatch(item.#currency, currency, "sum");
       total += item.#minor;
     }
     assertSafeResult(total);
@@ -133,58 +123,34 @@ export class Money {
   // Static comparison methods
 
   static equals(a: Money, b: Money): boolean {
-    if (!currenciesMatch(a.#currency, b.#currency)) {
-      throw new Error(
-        `Cannot compare ${a.#currency.code} and ${b.#currency.code}: currency mismatch`
-      );
-    }
+    assertCurrenciesMatch(a.#currency, b.#currency, "compare");
     return a.#minor === b.#minor;
   }
 
   static compare(a: Money, b: Money): number {
-    if (!currenciesMatch(a.#currency, b.#currency)) {
-      throw new Error(
-        `Cannot compare ${a.#currency.code} and ${b.#currency.code}: currency mismatch`
-      );
-    }
+    assertCurrenciesMatch(a.#currency, b.#currency, "compare");
     if (a.#minor < b.#minor) return -1;
     if (a.#minor > b.#minor) return 1;
     return 0;
   }
 
   static lessThan(a: Money, b: Money): boolean {
-    if (!currenciesMatch(a.#currency, b.#currency)) {
-      throw new Error(
-        `Cannot compare ${a.#currency.code} and ${b.#currency.code}: currency mismatch`
-      );
-    }
+    assertCurrenciesMatch(a.#currency, b.#currency, "compare");
     return a.#minor < b.#minor;
   }
 
   static greaterThan(a: Money, b: Money): boolean {
-    if (!currenciesMatch(a.#currency, b.#currency)) {
-      throw new Error(
-        `Cannot compare ${a.#currency.code} and ${b.#currency.code}: currency mismatch`
-      );
-    }
+    assertCurrenciesMatch(a.#currency, b.#currency, "compare");
     return a.#minor > b.#minor;
   }
 
   static lessThanOrEqual(a: Money, b: Money): boolean {
-    if (!currenciesMatch(a.#currency, b.#currency)) {
-      throw new Error(
-        `Cannot compare ${a.#currency.code} and ${b.#currency.code}: currency mismatch`
-      );
-    }
+    assertCurrenciesMatch(a.#currency, b.#currency, "compare");
     return a.#minor <= b.#minor;
   }
 
   static greaterThanOrEqual(a: Money, b: Money): boolean {
-    if (!currenciesMatch(a.#currency, b.#currency)) {
-      throw new Error(
-        `Cannot compare ${a.#currency.code} and ${b.#currency.code}: currency mismatch`
-      );
-    }
+    assertCurrenciesMatch(a.#currency, b.#currency, "compare");
     return a.#minor >= b.#minor;
   }
 
