@@ -148,6 +148,31 @@ describe("Money", () => {
     });
   });
 
+  describe("USDH sub-cent precision", () => {
+    test("USDH has 3 decimal places (mills/tenths of a cent)", () => {
+      const money = Money.fromMinor(Currency.USDH, 12345);
+      expect(money.toMinor()).toBe(12345);
+      expect(money.toNumber()).toBe(12.345);
+    });
+
+    test("USDH allows sub-cent calculations", () => {
+      // $12.345 in USDH (12 dollars, 34.5 cents)
+      const money = Money.fromNumber(Currency.USDH, 12.345);
+      expect(money.toMinor()).toBe(12345);
+    });
+
+    test("USDH strict mode allows 3 decimal places", () => {
+      const money = Money.fromNumber(Currency.USDH, 12.345, { strict: true });
+      expect(money.toMinor()).toBe(12345);
+    });
+
+    test("USDH strict mode rejects 4 decimal places", () => {
+      expect(() => {
+        Money.fromNumber(Currency.USDH, 12.3456, { strict: true });
+      }).toThrow();
+    });
+  });
+
   describe("round-trip serialization", () => {
     test("toMinor -> fromMinor is lossless", () => {
       const original = Money.fromNumber(Currency.USD, 123.45);

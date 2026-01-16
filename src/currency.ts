@@ -5,6 +5,7 @@ export interface CurrencyDefinition {
 
 export const Currency = {
   USD: { code: "USD", decimalPlaces: 2 },
+  USDH: { code: "USDH", decimalPlaces: 3 },
   EUR: { code: "EUR", decimalPlaces: 2 },
   GBP: { code: "GBP", decimalPlaces: 2 },
   JPY: { code: "JPY", decimalPlaces: 0 },
