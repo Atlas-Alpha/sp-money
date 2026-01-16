@@ -187,4 +187,18 @@ export class Money {
   greaterThanOrEqual(other: Money): boolean {
     return Money.greaterThanOrEqual(this, other);
   }
+
+  // Predicates
+
+  isZero(): boolean {
+    return this.#minor === 0n;
+  }
+
+  isPositive(): boolean {
+    return this.#minor > 0n;
+  }
+
+  isNegative(): boolean {
+    return this.#minor < 0n;
+  }
 }
