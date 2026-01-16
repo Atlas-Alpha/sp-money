@@ -21,6 +21,9 @@
   "engines": {
     "node": ">=16"
   },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "devDependencies": {
     "@types/bun": "latest",
     "typescript": "^5"
