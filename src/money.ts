@@ -318,4 +318,108 @@ export class Money {
 	round(increment: number, mode?: RoundingMode): Money {
 		return Money.roundTo(this, increment, mode);
 	}
+
+	// Percent operations
+
+	static percentOf(
+		money: Money,
+		percent: number,
+		options: { rounding?: RoundingMode } = {},
+	): Money {
+		const { rounding = "round" } = options;
+		const rawMinor = Number(money.#minor) * (percent / 100);
+
+		let resultMinor: number;
+		switch (rounding) {
+			case "floor":
+				resultMinor = Math.floor(rawMinor);
+				break;
+			case "ceil":
+				resultMinor = Math.ceil(rawMinor);
+				break;
+			case "trunc":
+				resultMinor = Math.trunc(rawMinor);
+				break;
+			default:
+				resultMinor = Math.round(rawMinor);
+		}
+
+		const result = BigInt(resultMinor);
+		assertSafeResult(result);
+		return new Money(result, money.#currency);
+	}
+
+	static incrementByPercent(
+		money: Money,
+		percent: number,
+		options: { rounding?: RoundingMode } = {},
+	): Money {
+		const { rounding = "round" } = options;
+		const rawMinor = Number(money.#minor) * (1 + percent / 100);
+
+		let resultMinor: number;
+		switch (rounding) {
+			case "floor":
+				resultMinor = Math.floor(rawMinor);
+				break;
+			case "ceil":
+				resultMinor = Math.ceil(rawMinor);
+				break;
+			case "trunc":
+				resultMinor = Math.trunc(rawMinor);
+				break;
+			default:
+				resultMinor = Math.round(rawMinor);
+		}
+
+		const result = BigInt(resultMinor);
+		assertSafeResult(result);
+		return new Money(result, money.#currency);
+	}
+
+	static decrementByPercent(
+		money: Money,
+		percent: number,
+		options: { rounding?: RoundingMode } = {},
+	): Money {
+		const { rounding = "round" } = options;
+		const rawMinor = Number(money.#minor) * (1 - percent / 100);
+
+		let resultMinor: number;
+		switch (rounding) {
+			case "floor":
+				resultMinor = Math.floor(rawMinor);
+				break;
+			case "ceil":
+				resultMinor = Math.ceil(rawMinor);
+				break;
+			case "trunc":
+				resultMinor = Math.trunc(rawMinor);
+				break;
+			default:
+				resultMinor = Math.round(rawMinor);
+		}
+
+		const result = BigInt(resultMinor);
+		assertSafeResult(result);
+		return new Money(result, money.#currency);
+	}
+
+	percentOf(percent: number, options?: { rounding?: RoundingMode }): Money {
+		return Money.percentOf(this, percent, options);
+	}
+
+	incrementByPercent(
+		percent: number,
+		options?: { rounding?: RoundingMode },
+	): Money {
+		return Money.incrementByPercent(this, percent, options);
+	}
+
+	decrementByPercent(
+		percent: number,
+		options?: { rounding?: RoundingMode },
+	): Money {
+		return Money.decrementByPercent(this, percent, options);
+	}
 }
