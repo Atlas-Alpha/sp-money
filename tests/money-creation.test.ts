@@ -157,7 +157,7 @@ describe("Money", () => {
 	describe("precision loss with large numbers", () => {
 		test("fromNumber throws when value exceeds safe integer range", () => {
 			// 90071992547409.93 * 100 = 9007199254740993, which exceeds MAX_SAFE_INTEGER
-			const value = 90071992547409.93;
+			const value = Number("90071992547409.93");
 			expect(() => Money.fromNumber(Currency.USD, value)).toThrow(
 				"Value too large",
 			);

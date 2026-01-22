@@ -265,6 +265,35 @@ describe("Money.round", () => {
 	});
 
 	describe("edge cases", () => {
+		test("increments that are not exact minor units throw", () => {
+			const money = Money.fromNumber(Currency.USD, 1.23);
+			expect(() => money.round(0.015)).toThrow();
+		});
+
+		test("tiny changes in increment that break minor units throw", () => {
+			const money = Money.fromNumber(Currency.USD, 1.23);
+			expect(() => money.round(0.014)).toThrow();
+			expect(() => money.round(0.015)).toThrow();
+		});
+
+		test("JPY rejects increments with decimals", () => {
+			const money = Money.fromNumber(Currency.JPY, 123);
+			expect(() => money.round(0.5)).toThrow();
+			expect(() => money.round(0.01)).toThrow();
+		});
+
+		test("BTC rejects increments that exceed 8 decimals", () => {
+			const money = Money.fromNumber(Currency.BTC, 0.12345678);
+			expect(() => money.round(0.000000001)).toThrow();
+			expect(() => money.round(0.000000015)).toThrow();
+		});
+
+		test("BTC accepts 8-decimal increments", () => {
+			const money = Money.fromNumber(Currency.BTC, 0.12345678);
+			const rounded = money.round(0.00000001);
+			expect(rounded.toNumber()).toBe(0.12345678);
+		});
+
 		test("rounding increment of 0 throws error", () => {
 			const money = Money.fromNumber(Currency.USD, 1.23);
 			expect(() => money.round(0)).toThrow();

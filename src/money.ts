@@ -116,12 +116,13 @@ export class Money {
 	}
 
 	static sum(items: Money[]): Money {
-		if (items.length === 0) {
+		const first = items[0];
+		if (first === undefined) {
 			throw new Error(
 				"Cannot sum empty array: at least one Money value required",
 			);
 		}
-		const currency = items[0]!.#currency;
+		const currency = first.#currency;
 		let total = 0n;
 		for (const item of items) {
 			assertCurrenciesMatch(item.#currency, currency, "sum");
@@ -257,6 +258,12 @@ export class Money {
 		const raw = increment * multiplier;
 		const incrementMinorNum = Math.round(raw);
 
+		if (!Number.isInteger(raw) || Math.abs(raw - incrementMinorNum) > 1e-9) {
+			throw new Error(
+				`Rounding increment ${increment} cannot be exactly represented with ${money.#currency.decimalPlaces} decimal places`,
+			);
+		}
+
 		if (!Number.isSafeInteger(incrementMinorNum)) {
 			throw new Error(
 				"Rounding increment is too large or imprecise to convert safely",
@@ -290,7 +297,6 @@ export class Money {
 			case "ceil":
 				rounded = minor < 0n ? base : base + incrementMinor;
 				break;
-			case "round":
 			default: {
 				const absRemainder = remainder < 0n ? -remainder : remainder;
 				const cmp = absRemainder * 2n - incrementMinor;
