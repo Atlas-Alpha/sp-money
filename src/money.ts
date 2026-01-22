@@ -249,13 +249,21 @@ export class Money {
 		increment: number,
 		mode: RoundingMode = "round",
 	): Money {
-		if (increment <= 0) {
-			throw new Error("Rounding increment must be a positive number");
+		if (!Number.isFinite(increment) || increment <= 0) {
+			throw new Error("Rounding increment must be a finite positive number");
 		}
 
 		const multiplier = 10 ** money.#currency.decimalPlaces;
-		const incrementMinor = BigInt(Math.round(increment * multiplier));
+		const raw = increment * multiplier;
+		const incrementMinorNum = Math.round(raw);
 
+		if (!Number.isSafeInteger(incrementMinorNum)) {
+			throw new Error(
+				"Rounding increment is too large or imprecise to convert safely",
+			);
+		}
+
+		const incrementMinor = BigInt(incrementMinorNum);
 		if (incrementMinor === 0n) {
 			throw new Error(
 				"Rounding increment is too small for this currency's precision",
@@ -269,30 +277,29 @@ export class Money {
 			return new Money(minor, money.#currency);
 		}
 
+		const base = minor - remainder;
 		let rounded: bigint;
+
 		switch (mode) {
+			case "trunc":
+				rounded = base;
+				break;
 			case "floor":
-				rounded =
-					minor < 0n ? minor - remainder - incrementMinor : minor - remainder;
+				rounded = minor < 0n ? base - incrementMinor : base;
 				break;
 			case "ceil":
-				rounded =
-					minor < 0n ? minor - remainder : minor - remainder + incrementMinor;
-				break;
-			case "trunc":
-				rounded = minor - remainder;
+				rounded = minor < 0n ? base : base + incrementMinor;
 				break;
 			case "round":
 			default: {
 				const absRemainder = remainder < 0n ? -remainder : remainder;
-				const roundUp = absRemainder * 2n >= incrementMinor;
-				if (roundUp) {
-					rounded =
-						minor < 0n
-							? minor - remainder - incrementMinor
-							: minor - remainder + incrementMinor;
+				const cmp = absRemainder * 2n - incrementMinor;
+				if (cmp < 0n) {
+					rounded = base;
+				} else if (cmp > 0n) {
+					rounded = minor < 0n ? base - incrementMinor : base + incrementMinor;
 				} else {
-					rounded = minor - remainder;
+					rounded = minor < 0n ? base : base + incrementMinor;
 				}
 				break;
 			}
