@@ -201,4 +201,33 @@ export class Money {
   isNegative(): boolean {
     return this.#minor < 0n;
   }
+
+  // Allocation
+
+  static allocate(money: Money, parts: number): Money[] {
+    if (!Number.isInteger(parts) || parts < 1) {
+      throw new Error("Allocation count must be a positive integer");
+    }
+    if (!Number.isSafeInteger(parts)) {
+      throw new Error("Allocation count must be a safe integer");
+    }
+
+    const partsBigInt = BigInt(parts);
+    const base = money.#minor / partsBigInt;
+    const remainder = money.#minor % partsBigInt;
+    const absRemainder = remainder < 0n ? -remainder : remainder;
+    const sign = remainder < 0n ? -1n : 1n;
+
+    const result: Money[] = [];
+    for (let i = 0n; i < partsBigInt; i++) {
+      const extra = i < absRemainder ? sign : 0n;
+      result.push(new Money(base + extra, money.#currency));
+    }
+
+    return result;
+  }
+
+  allocate(parts: number): Money[] {
+    return Money.allocate(this, parts);
+  }
 }
