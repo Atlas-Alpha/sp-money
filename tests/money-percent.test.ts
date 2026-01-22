@@ -514,7 +514,10 @@ describe("Money", () => {
 		});
 
 		test("handles large value with small percentage safely", () => {
-			const money = Money.fromMinor(Currency.USD, Number.MAX_SAFE_INTEGER - 1000);
+			const money = Money.fromMinor(
+				Currency.USD,
+				Number.MAX_SAFE_INTEGER - 1000,
+			);
 			// 0.0001% of MAX_SAFE should be safe
 			const result = Money.percentOf(money, 0.0001);
 			expect(result.toMinor()).toBeGreaterThan(0);

@@ -422,4 +422,13 @@ export class Money {
 	): Money {
 		return Money.decrementByPercent(this, percent, options);
 	}
+
+	// Serialization
+
+	toJSON(): { amount: number; currency: string } {
+		return {
+			amount: this.toMinor(),
+			currency: this.#currency.code,
+		};
+	}
 }
