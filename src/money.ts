@@ -7,6 +7,109 @@ export interface FromNumberOptions {
 	strict?: boolean;
 }
 
+// Internal precision for scaled integer arithmetic
+// 20 decimal places to handle rates like 0.00001080599586018141
+const INTERNAL_PRECISION = 20;
+const INTERNAL_SCALE = 10n ** BigInt(INTERNAL_PRECISION);
+
+/**
+ * Converts a number to a decimal string representation.
+ * Uses toString() which often gives cleaner results (e.g., 1.005 stays "1.005"),
+ * but falls back to toPrecision for edge cases with very small/large numbers.
+ */
+function numberToDecimalString(n: number): string {
+	// Handle special cases
+	if (!Number.isFinite(n)) {
+		throw new Error(`Cannot convert ${n} to decimal string`);
+	}
+	if (n === 0) return "0";
+
+	// toString() often gives the cleanest representation
+	const str = n.toString();
+
+	// If it's in scientific notation, use toPrecision for more digits
+	if (str.includes("e") || str.includes("E")) {
+		return n.toPrecision(17);
+	}
+
+	return str;
+}
+
+function parseDecimalStringToScaled(str: string): bigint {
+	// Handle sign
+	let negative = str.startsWith("-");
+	if (negative) str = str.slice(1);
+
+	// Handle scientific notation
+	const eIndex = str.toLowerCase().indexOf("e");
+	if (eIndex !== -1) {
+		const mantissa = str.slice(0, eIndex);
+		const exponent = parseInt(str.slice(eIndex + 1), 10);
+		const scaledMantissa = parseDecimalStringToScaled(mantissa);
+		const sign = negative ? -1n : 1n;
+		if (exponent >= 0) {
+			return sign * scaledMantissa * 10n ** BigInt(exponent);
+		} else {
+			return sign * scaledMantissa / 10n ** BigInt(-exponent);
+		}
+	}
+
+	// Split into integer and decimal parts
+	const dotIndex = str.indexOf(".");
+	let intPart: string;
+	let decPart: string;
+	if (dotIndex === -1) {
+		intPart = str || "0";
+		decPart = "";
+	} else {
+		intPart = str.slice(0, dotIndex) || "0";
+		decPart = str.slice(dotIndex + 1);
+	}
+
+	// Pad or truncate decimal part to internal precision
+	decPart = decPart.padEnd(INTERNAL_PRECISION, "0").slice(0, INTERNAL_PRECISION);
+
+	const scaledInt = BigInt(intPart) * INTERNAL_SCALE;
+	const scaledDec = BigInt(decPart);
+	const result = scaledInt + scaledDec;
+
+	return negative ? -result : result;
+}
+
+function roundScaledToMinor(
+	scaled: bigint,
+	targetDecimalPlaces: number,
+	mode: RoundingMode,
+): bigint {
+	const targetScale = 10n ** BigInt(targetDecimalPlaces);
+	const divisor = INTERNAL_SCALE / targetScale;
+
+	const quotient = scaled / divisor;
+	const remainder = scaled % divisor;
+
+	if (remainder === 0n) return quotient;
+
+	const isNegative = scaled < 0n;
+	const absRemainder = isNegative ? -remainder : remainder;
+	const halfDivisor = divisor / 2n;
+
+	switch (mode) {
+		case "floor":
+			return isNegative ? quotient - 1n : quotient;
+		case "ceil":
+			return isNegative ? quotient : quotient + 1n;
+		case "trunc":
+			return quotient;
+		case "round":
+		default:
+			// Round half away from zero
+			if (absRemainder > halfDivisor || (absRemainder === halfDivisor && !isNegative)) {
+				return isNegative ? quotient - 1n : quotient + 1n;
+			}
+			return quotient;
+	}
+}
+
 function assertCurrenciesMatch(
 	a: CurrencyType,
 	b: CurrencyType,
@@ -46,44 +149,35 @@ export class Money {
 		value: number,
 		options: FromNumberOptions = {},
 	): Money {
-		const { rounding, strict } = options;
-		const multiplier = 10 ** currency.decimalPlaces;
-		const rawMinor = value * multiplier;
+		const { rounding = "round", strict } = options;
 
-		if (Math.abs(rawMinor) > Number.MAX_SAFE_INTEGER) {
+		// Check if the value, when converted to minor units, would exceed safe integer range
+		const multiplier = 10 ** currency.decimalPlaces;
+		const estimatedMinor = Math.abs(value) * multiplier;
+		if (estimatedMinor > Number.MAX_SAFE_INTEGER) {
 			throw new Error(
 				`Value too large: ${value} exceeds safe integer range when converted to minor units`,
 			);
 		}
 
+		// Convert to string to preserve decimal representation
+		const valueStr = numberToDecimalString(value);
+		const scaledValue = parseDecimalStringToScaled(valueStr);
+
+		// For strict mode, check if value can be exactly represented
 		if (strict) {
-			if (!Number.isInteger(rawMinor)) {
+			const targetScale = 10n ** BigInt(currency.decimalPlaces);
+			const divisor = INTERNAL_SCALE / targetScale;
+			if (scaledValue % divisor !== 0n) {
 				throw new Error(
 					`Precision loss: ${value} cannot be exactly represented with ${currency.decimalPlaces} decimal places`,
 				);
 			}
-			return new Money(BigInt(rawMinor), currency);
 		}
 
-		let minor: number;
-		switch (rounding) {
-			case "floor":
-				minor = Math.floor(rawMinor);
-				break;
-			case "ceil":
-				minor = Math.ceil(rawMinor);
-				break;
-			case "round":
-				minor = Math.round(rawMinor);
-				break;
-			case "trunc":
-				minor = Math.trunc(rawMinor);
-				break;
-			default:
-				minor = Math.round(rawMinor);
-		}
-
-		return new Money(BigInt(minor), currency);
+		const minor = roundScaledToMinor(scaledValue, currency.decimalPlaces, rounding);
+		assertSafeResult(minor);
+		return new Money(minor, currency);
 	}
 
 	static fromMinor(currency: CurrencyType, minor: number): Money {
@@ -257,49 +351,19 @@ export class Money {
 
 		const { rounding = "round" } = options;
 
-		// Convert source to major units, apply rate, then to target minor units
-		// This order preserves floating point behavior expected by floor/ceil/trunc
-		const sourceAmount =
-			Number(money.#minor) / 10 ** money.#currency.decimalPlaces;
-		const convertedAmount = sourceAmount * rate;
-		const targetMultiplier = 10 ** targetCurrency.decimalPlaces;
-		const rawMinor = convertedAmount * targetMultiplier;
+		// Parse rate to scaled bigint
+		const scaledRate = parseDecimalStringToScaled(numberToDecimalString(rate));
 
-		// Check for overflow before rounding
-		if (Math.abs(rawMinor) > Number.MAX_SAFE_INTEGER) {
-			throw new Error("Result too large: exceeds safe integer range");
-		}
+		// Scale source to internal precision
+		const sourceScale = 10n ** BigInt(money.#currency.decimalPlaces);
+		const scaledSource = money.#minor * (INTERNAL_SCALE / sourceScale);
 
-		// Apply rounding
-		let resultMinor: number;
-		switch (rounding) {
-			case "floor":
-				resultMinor = Math.floor(rawMinor);
-				break;
-			case "ceil":
-				resultMinor = Math.ceil(rawMinor);
-				break;
-			case "trunc":
-				resultMinor = Math.trunc(rawMinor);
-				break;
-			default: {
-				// Handle floating point errors near .5 midpoints
-				// Values like 100.5 may be represented as 100.49999999999999
-				const epsilon = 1e-9;
-				if (rawMinor >= 0) {
-					const floor = Math.floor(rawMinor);
-					const fraction = rawMinor - floor;
-					resultMinor = fraction >= 0.5 - epsilon ? floor + 1 : floor;
-				} else {
-					resultMinor = Math.round(rawMinor);
-				}
-				break;
-			}
-		}
+		// Multiply and scale back down
+		const rawProduct = scaledSource * scaledRate / INTERNAL_SCALE;
 
-		const result = BigInt(resultMinor);
-		assertSafeResult(result);
-		return new Money(result, targetCurrency);
+		const resultMinor = roundScaledToMinor(rawProduct, targetCurrency.decimalPlaces, rounding);
+		assertSafeResult(resultMinor);
+		return new Money(resultMinor, targetCurrency);
 	}
 
 	convert(
@@ -321,23 +385,20 @@ export class Money {
 			throw new Error("Rounding increment must be a finite positive number");
 		}
 
-		const multiplier = 10 ** money.#currency.decimalPlaces;
-		const raw = increment * multiplier;
-		const incrementMinorNum = Math.round(raw);
+		// Parse increment to scaled bigint
+		const scaledIncrement = parseDecimalStringToScaled(numberToDecimalString(increment));
 
-		if (!Number.isInteger(raw) || Math.abs(raw - incrementMinorNum) > 1e-9) {
+		// Convert to minor units and verify exact representation
+		const targetScale = 10n ** BigInt(money.#currency.decimalPlaces);
+		const divisor = INTERNAL_SCALE / targetScale;
+
+		if (scaledIncrement % divisor !== 0n) {
 			throw new Error(
 				`Rounding increment ${increment} cannot be exactly represented with ${money.#currency.decimalPlaces} decimal places`,
 			);
 		}
 
-		if (!Number.isSafeInteger(incrementMinorNum)) {
-			throw new Error(
-				"Rounding increment is too large or imprecise to convert safely",
-			);
-		}
-
-		const incrementMinor = BigInt(incrementMinorNum);
+		const incrementMinor = scaledIncrement / divisor;
 		if (incrementMinor === 0n) {
 			throw new Error(
 				"Rounding increment is too small for this currency's precision",
@@ -394,26 +455,20 @@ export class Money {
 		options: { rounding?: RoundingMode } = {},
 	): Money {
 		const { rounding = "round" } = options;
-		const rawMinor = Number(money.#minor) * (percent / 100);
 
-		let resultMinor: number;
-		switch (rounding) {
-			case "floor":
-				resultMinor = Math.floor(rawMinor);
-				break;
-			case "ceil":
-				resultMinor = Math.ceil(rawMinor);
-				break;
-			case "trunc":
-				resultMinor = Math.trunc(rawMinor);
-				break;
-			default:
-				resultMinor = Math.round(rawMinor);
-		}
+		const scaledPercent = parseDecimalStringToScaled(numberToDecimalString(percent));
+		const scaledHundred = 100n * INTERNAL_SCALE;
 
-		const result = BigInt(resultMinor);
-		assertSafeResult(result);
-		return new Money(result, money.#currency);
+		// Scale money to internal precision
+		const currencyScale = 10n ** BigInt(money.#currency.decimalPlaces);
+		const scaledMoney = money.#minor * (INTERNAL_SCALE / currencyScale);
+
+		// Calculate: scaledMoney * scaledPercent / scaledHundred
+		const rawResult = scaledMoney * scaledPercent / scaledHundred;
+
+		const resultMinor = roundScaledToMinor(rawResult, money.#currency.decimalPlaces, rounding);
+		assertSafeResult(resultMinor);
+		return new Money(resultMinor, money.#currency);
 	}
 
 	static incrementByPercent(
@@ -422,26 +477,20 @@ export class Money {
 		options: { rounding?: RoundingMode } = {},
 	): Money {
 		const { rounding = "round" } = options;
-		const rawMinor = Number(money.#minor) * (1 + percent / 100);
 
-		let resultMinor: number;
-		switch (rounding) {
-			case "floor":
-				resultMinor = Math.floor(rawMinor);
-				break;
-			case "ceil":
-				resultMinor = Math.ceil(rawMinor);
-				break;
-			case "trunc":
-				resultMinor = Math.trunc(rawMinor);
-				break;
-			default:
-				resultMinor = Math.round(rawMinor);
-		}
+		const scaledPercent = parseDecimalStringToScaled(numberToDecimalString(percent));
+		const scaledHundred = 100n * INTERNAL_SCALE;
 
-		const result = BigInt(resultMinor);
-		assertSafeResult(result);
-		return new Money(result, money.#currency);
+		// Scale money to internal precision
+		const currencyScale = 10n ** BigInt(money.#currency.decimalPlaces);
+		const scaledMoney = money.#minor * (INTERNAL_SCALE / currencyScale);
+
+		// Calculate: scaledMoney * (100 + percent) / 100
+		const rawResult = scaledMoney * (scaledHundred + scaledPercent) / scaledHundred;
+
+		const resultMinor = roundScaledToMinor(rawResult, money.#currency.decimalPlaces, rounding);
+		assertSafeResult(resultMinor);
+		return new Money(resultMinor, money.#currency);
 	}
 
 	static decrementByPercent(
@@ -450,26 +499,20 @@ export class Money {
 		options: { rounding?: RoundingMode } = {},
 	): Money {
 		const { rounding = "round" } = options;
-		const rawMinor = Number(money.#minor) * (1 - percent / 100);
 
-		let resultMinor: number;
-		switch (rounding) {
-			case "floor":
-				resultMinor = Math.floor(rawMinor);
-				break;
-			case "ceil":
-				resultMinor = Math.ceil(rawMinor);
-				break;
-			case "trunc":
-				resultMinor = Math.trunc(rawMinor);
-				break;
-			default:
-				resultMinor = Math.round(rawMinor);
-		}
+		const scaledPercent = parseDecimalStringToScaled(numberToDecimalString(percent));
+		const scaledHundred = 100n * INTERNAL_SCALE;
 
-		const result = BigInt(resultMinor);
-		assertSafeResult(result);
-		return new Money(result, money.#currency);
+		// Scale money to internal precision
+		const currencyScale = 10n ** BigInt(money.#currency.decimalPlaces);
+		const scaledMoney = money.#minor * (INTERNAL_SCALE / currencyScale);
+
+		// Calculate: scaledMoney * (100 - percent) / 100
+		const rawResult = scaledMoney * (scaledHundred - scaledPercent) / scaledHundred;
+
+		const resultMinor = roundScaledToMinor(rawResult, money.#currency.decimalPlaces, rounding);
+		assertSafeResult(resultMinor);
+		return new Money(resultMinor, money.#currency);
 	}
 
 	percentOf(percent: number, options?: { rounding?: RoundingMode }): Money {

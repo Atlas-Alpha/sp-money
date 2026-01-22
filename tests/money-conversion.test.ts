@@ -366,8 +366,8 @@ describe("Money", () => {
 		test("instance method supports rounding options", () => {
 			const usd = Money.fromNumber(Currency.USD, 100);
 			const result = usd.convert(Currency.EUR, 1.3899, { rounding: "floor" });
-			// 100 * 1.3899 = 138.98999... in float → floor = 138.98
-			expect(result.toNumber()).toBe(138.98);
+			// 100 * 1.3899 = 138.99 exactly (deterministic integer arithmetic)
+			expect(result.toNumber()).toBe(138.99);
 		});
 
 		test("instance method chains with other operations", () => {
