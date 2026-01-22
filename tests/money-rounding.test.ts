@@ -1,5 +1,5 @@
-import { test, expect, describe } from "bun:test";
-import { Money, Currency } from "../src";
+import { describe, expect, test } from "bun:test";
+import { Currency, Money } from "../src";
 
 describe("Money.round", () => {
 	describe("rounding to nearest cent (0.01)", () => {

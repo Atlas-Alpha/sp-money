@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { Money, Currency } from "../src";
+import { Currency, Money } from "../src";
 
 describe("Money", () => {
 	describe("Money.equals (static)", () => {
