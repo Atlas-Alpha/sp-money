@@ -37,6 +37,13 @@ describe("Money", () => {
 			const money = Money.fromMinor(Currency.EUR, 100);
 			expect(money.currency).toBe(Currency.EUR);
 		});
+
+		test("throws on decimal input", () => {
+			// Minor units must be integers - decimals throw
+			expect(() => Money.fromMinor(Currency.USD, 1.1)).toThrow(
+				"Not an integer",
+			);
+		});
 	});
 
 	describe("fromNumber", () => {
