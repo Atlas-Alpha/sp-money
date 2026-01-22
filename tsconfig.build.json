@@ -1,18 +1,18 @@
 {
-  "compilerOptions": {
-    "lib": ["ES2021"],
-    "target": "ES2021",
-    "module": "CommonJS",
-    "moduleResolution": "node",
-    "declaration": true,
-    "emitDeclarationOnly": true,
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "strict": true,
-    "skipLibCheck": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedIndexedAccess": true,
-    "noImplicitOverride": true
-  },
-  "include": ["src"]
+	"compilerOptions": {
+		"lib": ["ES2021"],
+		"target": "ES2021",
+		"module": "CommonJS",
+		"moduleResolution": "node",
+		"declaration": true,
+		"emitDeclarationOnly": true,
+		"outDir": "./dist",
+		"rootDir": "./src",
+		"strict": true,
+		"skipLibCheck": true,
+		"noFallthroughCasesInSwitch": true,
+		"noUncheckedIndexedAccess": true,
+		"noImplicitOverride": true
+	},
+	"include": ["src"]
 }
