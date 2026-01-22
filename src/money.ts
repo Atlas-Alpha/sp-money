@@ -243,6 +243,73 @@ export class Money {
 		return Money.allocate(this, parts);
 	}
 
+	// Conversion
+
+	static convert(
+		money: Money,
+		targetCurrency: CurrencyType,
+		rate: number,
+		options: { rounding?: RoundingMode } = {},
+	): Money {
+		if (!Number.isFinite(rate) || rate <= 0) {
+			throw new Error("Exchange rate must be a finite positive number");
+		}
+
+		const { rounding = "round" } = options;
+
+		// Convert source to major units, apply rate, then to target minor units
+		// This order preserves floating point behavior expected by floor/ceil/trunc
+		const sourceAmount =
+			Number(money.#minor) / 10 ** money.#currency.decimalPlaces;
+		const convertedAmount = sourceAmount * rate;
+		const targetMultiplier = 10 ** targetCurrency.decimalPlaces;
+		const rawMinor = convertedAmount * targetMultiplier;
+
+		// Check for overflow before rounding
+		if (Math.abs(rawMinor) > Number.MAX_SAFE_INTEGER) {
+			throw new Error("Result too large: exceeds safe integer range");
+		}
+
+		// Apply rounding
+		let resultMinor: number;
+		switch (rounding) {
+			case "floor":
+				resultMinor = Math.floor(rawMinor);
+				break;
+			case "ceil":
+				resultMinor = Math.ceil(rawMinor);
+				break;
+			case "trunc":
+				resultMinor = Math.trunc(rawMinor);
+				break;
+			default: {
+				// Handle floating point errors near .5 midpoints
+				// Values like 100.5 may be represented as 100.49999999999999
+				const epsilon = 1e-9;
+				if (rawMinor >= 0) {
+					const floor = Math.floor(rawMinor);
+					const fraction = rawMinor - floor;
+					resultMinor = fraction >= 0.5 - epsilon ? floor + 1 : floor;
+				} else {
+					resultMinor = Math.round(rawMinor);
+				}
+				break;
+			}
+		}
+
+		const result = BigInt(resultMinor);
+		assertSafeResult(result);
+		return new Money(result, targetCurrency);
+	}
+
+	convert(
+		targetCurrency: CurrencyType,
+		rate: number,
+		options?: { rounding?: RoundingMode },
+	): Money {
+		return Money.convert(this, targetCurrency, rate, options);
+	}
+
 	// Rounding
 
 	static roundTo(
