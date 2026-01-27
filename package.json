@@ -1,6 +1,6 @@
 {
 	"name": "@atlas-alpha/sp-money",
-	"version": "0.0.1-alpha.3",
+	"version": "0.0.1-alpha.4",
 	"description": "Money primitive library",
 	"main": "./dist/index.cjs",
 	"module": "./dist/index.js",
