@@ -49,14 +49,14 @@ describe("Money", () => {
 
 		test("handles very precise percentages (6+ decimal places)", () => {
 			const money = Money.fromNumber(Currency.USD, 10000);
-			const result = Money.percentOf(money, 3.141592);
+			const result = Money.percentOf(money, Math.PI);
 			// 10000 * 3.141592 / 100 = 314.1592, rounds to 314.16
 			expect(result.toNumber()).toBe(314.16);
 		});
 
 		test("handles pi percent precisely", () => {
 			const money = Money.fromNumber(Currency.USD, 100);
-			const result = Money.percentOf(money, 3.14159265358979);
+			const result = Money.percentOf(money, Math.PI);
 			// 100 * 3.14159265358979 / 100 = 3.14159265358979, rounds to 3.14
 			expect(result.toNumber()).toBe(3.14);
 		});
@@ -197,7 +197,7 @@ describe("Money", () => {
 
 		test("handles pi percent", () => {
 			const money = Money.fromNumber(Currency.USD, 100);
-			const result = Money.incrementByPercent(money, 3.14159265358979);
+			const result = Money.incrementByPercent(money, Math.PI);
 			expect(result.toNumber()).toBe(103.14);
 		});
 
@@ -324,7 +324,7 @@ describe("Money", () => {
 
 		test("handles pi percent", () => {
 			const money = Money.fromNumber(Currency.USD, 100);
-			const result = Money.decrementByPercent(money, 3.14159265358979);
+			const result = Money.decrementByPercent(money, Math.PI);
 			expect(result.toNumber()).toBe(96.86);
 		});
 

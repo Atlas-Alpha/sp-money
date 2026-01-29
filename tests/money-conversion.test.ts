@@ -63,7 +63,11 @@ describe("Money", () => {
 
 			test("converts 0.01 BTC to USD at rate 0.00001080599586018141", () => {
 				const btc = Money.fromNumber(Currency.BTC, 0.01);
-				const result = Money.convert(btc, Currency.USD, 1 / 0.00001080599586018141);
+				const result = Money.convert(
+					btc,
+					Currency.USD,
+					1 / 0.00001080599586018141,
+				);
 				// 0.01 * (1 / 0.00001080599586018141) ≈ $925.41 USD (floating point)
 				expect(result.toNumber()).toBe(925.41);
 				expect(result.currency).toBe(Currency.USD);
@@ -71,14 +75,22 @@ describe("Money", () => {
 
 			test("converts 1 satoshi to USD", () => {
 				const btc = Money.fromMinor(Currency.BTC, 1);
-				const result = Money.convert(btc, Currency.USD, 1 / 0.00001080599586018141);
+				const result = Money.convert(
+					btc,
+					Currency.USD,
+					1 / 0.00001080599586018141,
+				);
 				// 0.00000001 / 0.00001080599586018141 = $0.000925 USD ≈ $0.00
 				expect(result.toMinor()).toBe(0);
 			});
 
 			test("converts 100 satoshis to USD", () => {
 				const btc = Money.fromMinor(Currency.BTC, 100);
-				const result = Money.convert(btc, Currency.USD, 1 / 0.00001080599586018141);
+				const result = Money.convert(
+					btc,
+					Currency.USD,
+					1 / 0.00001080599586018141,
+				);
 				// 0.000001 / 0.00001080599586018141 = $0.0925 USD ≈ $0.09
 				expect(result.toNumber()).toBe(0.09);
 			});
@@ -122,37 +134,49 @@ describe("Money", () => {
 
 			test("respects floor rounding mode at midpoint", () => {
 				const usd = Money.fromNumber(Currency.USD, 1);
-				const result = Money.convert(usd, Currency.EUR, 1.005, { rounding: "floor" });
+				const result = Money.convert(usd, Currency.EUR, 1.005, {
+					rounding: "floor",
+				});
 				expect(result.toMinor()).toBe(100);
 			});
 
 			test("respects ceil rounding mode at midpoint", () => {
 				const usd = Money.fromNumber(Currency.USD, 1);
-				const result = Money.convert(usd, Currency.EUR, 1.005, { rounding: "ceil" });
+				const result = Money.convert(usd, Currency.EUR, 1.005, {
+					rounding: "ceil",
+				});
 				expect(result.toMinor()).toBe(101);
 			});
 
 			test("respects trunc rounding mode at midpoint", () => {
 				const usd = Money.fromNumber(Currency.USD, 1);
-				const result = Money.convert(usd, Currency.EUR, 1.005, { rounding: "trunc" });
+				const result = Money.convert(usd, Currency.EUR, 1.005, {
+					rounding: "trunc",
+				});
 				expect(result.toMinor()).toBe(100);
 			});
 
 			test("rounds negative midpoint with floor", () => {
 				const usd = Money.fromNumber(Currency.USD, -1);
-				const result = Money.convert(usd, Currency.EUR, 1.005, { rounding: "floor" });
+				const result = Money.convert(usd, Currency.EUR, 1.005, {
+					rounding: "floor",
+				});
 				expect(result.toMinor()).toBe(-101);
 			});
 
 			test("rounds negative midpoint with ceil", () => {
 				const usd = Money.fromNumber(Currency.USD, -1);
-				const result = Money.convert(usd, Currency.EUR, 1.005, { rounding: "ceil" });
+				const result = Money.convert(usd, Currency.EUR, 1.005, {
+					rounding: "ceil",
+				});
 				expect(result.toMinor()).toBe(-100);
 			});
 
 			test("rounds negative midpoint with trunc", () => {
 				const usd = Money.fromNumber(Currency.USD, -1);
-				const result = Money.convert(usd, Currency.EUR, 1.005, { rounding: "trunc" });
+				const result = Money.convert(usd, Currency.EUR, 1.005, {
+					rounding: "trunc",
+				});
 				expect(result.toMinor()).toBe(-100);
 			});
 
@@ -165,8 +189,12 @@ describe("Money", () => {
 			test("rounding affects JPY (0 decimal places) correctly", () => {
 				const usd = Money.fromNumber(Currency.USD, 1);
 				// 1 * 157.5 = 157.5 JPY
-				const resultFloor = Money.convert(usd, Currency.JPY, 157.5, { rounding: "floor" });
-				const resultCeil = Money.convert(usd, Currency.JPY, 157.5, { rounding: "ceil" });
+				const resultFloor = Money.convert(usd, Currency.JPY, 157.5, {
+					rounding: "floor",
+				});
+				const resultCeil = Money.convert(usd, Currency.JPY, 157.5, {
+					rounding: "ceil",
+				});
 				const resultRound = Money.convert(usd, Currency.JPY, 157.5);
 				expect(resultFloor.toMinor()).toBe(157);
 				expect(resultCeil.toMinor()).toBe(158);
@@ -176,8 +204,12 @@ describe("Money", () => {
 			test("rounding affects BTC (8 decimal places) correctly", () => {
 				const usd = Money.fromNumber(Currency.USD, 1);
 				// 1 * 0.000000005 = 0.5 satoshi
-				const resultFloor = Money.convert(usd, Currency.BTC, 0.000000005, { rounding: "floor" });
-				const resultCeil = Money.convert(usd, Currency.BTC, 0.000000005, { rounding: "ceil" });
+				const resultFloor = Money.convert(usd, Currency.BTC, 0.000000005, {
+					rounding: "floor",
+				});
+				const resultCeil = Money.convert(usd, Currency.BTC, 0.000000005, {
+					rounding: "ceil",
+				});
 				expect(resultFloor.toMinor()).toBe(0);
 				expect(resultCeil.toMinor()).toBe(1);
 			});
@@ -426,7 +458,11 @@ describe("Money", () => {
 
 		test("marketplace: convert seller earnings from local currency to USD", () => {
 			const cadEarnings = Money.fromNumber(Currency.CAD, 250);
-			const usdEarnings = Money.convert(cadEarnings, Currency.USD, 1 / CAD_RATE);
+			const usdEarnings = Money.convert(
+				cadEarnings,
+				Currency.USD,
+				1 / CAD_RATE,
+			);
 			expect(usdEarnings.toNumber()).toBe(183.82);
 		});
 
@@ -449,7 +485,7 @@ describe("Money", () => {
 		});
 
 		test("micro-payment: very small USD to BTC conversion", () => {
-			const microPayment = Money.fromNumber(Currency.USD, 0.10);
+			const microPayment = Money.fromNumber(Currency.USD, 0.1);
 			const btcResult = Money.convert(microPayment, Currency.BTC, BTC_RATE);
 			// 0.10 * 0.00001080599586018141 = 0.000001080599586 BTC ≈ 108 satoshis
 			expect(btcResult.toMinor()).toBeGreaterThan(0);
@@ -480,7 +516,9 @@ describe("Money", () => {
 	describe("conversion overflow safety", () => {
 		test("throws when conversion result exceeds safe integer range", () => {
 			const large = Money.fromMinor(Currency.USD, Number.MAX_SAFE_INTEGER);
-			expect(() => Money.convert(large, Currency.JPY, 157)).toThrow(/safe|range|too large/i);
+			expect(() => Money.convert(large, Currency.JPY, 157)).toThrow(
+				/safe|range|too large/i,
+			);
 		});
 
 		test("handles large value with small rate safely", () => {

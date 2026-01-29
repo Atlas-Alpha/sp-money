@@ -37,7 +37,7 @@ function numberToDecimalString(n: number): string {
 
 function parseDecimalStringToScaled(str: string): bigint {
 	// Handle sign
-	let negative = str.startsWith("-");
+	const negative = str.startsWith("-");
 	if (negative) str = str.slice(1);
 
 	// Handle scientific notation
@@ -50,7 +50,7 @@ function parseDecimalStringToScaled(str: string): bigint {
 		if (exponent >= 0) {
 			return sign * scaledMantissa * 10n ** BigInt(exponent);
 		} else {
-			return sign * scaledMantissa / 10n ** BigInt(-exponent);
+			return (sign * scaledMantissa) / 10n ** BigInt(-exponent);
 		}
 	}
 
@@ -67,7 +67,9 @@ function parseDecimalStringToScaled(str: string): bigint {
 	}
 
 	// Pad or truncate decimal part to internal precision
-	decPart = decPart.padEnd(INTERNAL_PRECISION, "0").slice(0, INTERNAL_PRECISION);
+	decPart = decPart
+		.padEnd(INTERNAL_PRECISION, "0")
+		.slice(0, INTERNAL_PRECISION);
 
 	const scaledInt = BigInt(intPart) * INTERNAL_SCALE;
 	const scaledDec = BigInt(decPart);
@@ -100,10 +102,12 @@ function roundScaledToMinor(
 			return isNegative ? quotient : quotient + 1n;
 		case "trunc":
 			return quotient;
-		case "round":
 		default:
 			// Round half away from zero
-			if (absRemainder > halfDivisor || (absRemainder === halfDivisor && !isNegative)) {
+			if (
+				absRemainder > halfDivisor ||
+				(absRemainder === halfDivisor && !isNegative)
+			) {
 				return isNegative ? quotient - 1n : quotient + 1n;
 			}
 			return quotient;
@@ -175,7 +179,11 @@ export class Money {
 			}
 		}
 
-		const minor = roundScaledToMinor(scaledValue, currency.decimalPlaces, rounding);
+		const minor = roundScaledToMinor(
+			scaledValue,
+			currency.decimalPlaces,
+			rounding,
+		);
 		assertSafeResult(minor);
 		return new Money(minor, currency);
 	}
@@ -359,9 +367,13 @@ export class Money {
 		const scaledSource = money.#minor * (INTERNAL_SCALE / sourceScale);
 
 		// Multiply and scale back down
-		const rawProduct = scaledSource * scaledRate / INTERNAL_SCALE;
+		const rawProduct = (scaledSource * scaledRate) / INTERNAL_SCALE;
 
-		const resultMinor = roundScaledToMinor(rawProduct, targetCurrency.decimalPlaces, rounding);
+		const resultMinor = roundScaledToMinor(
+			rawProduct,
+			targetCurrency.decimalPlaces,
+			rounding,
+		);
 		assertSafeResult(resultMinor);
 		return new Money(resultMinor, targetCurrency);
 	}
@@ -386,7 +398,9 @@ export class Money {
 		}
 
 		// Parse increment to scaled bigint
-		const scaledIncrement = parseDecimalStringToScaled(numberToDecimalString(increment));
+		const scaledIncrement = parseDecimalStringToScaled(
+			numberToDecimalString(increment),
+		);
 
 		// Convert to minor units and verify exact representation
 		const targetScale = 10n ** BigInt(money.#currency.decimalPlaces);
@@ -456,7 +470,9 @@ export class Money {
 	): Money {
 		const { rounding = "round" } = options;
 
-		const scaledPercent = parseDecimalStringToScaled(numberToDecimalString(percent));
+		const scaledPercent = parseDecimalStringToScaled(
+			numberToDecimalString(percent),
+		);
 		const scaledHundred = 100n * INTERNAL_SCALE;
 
 		// Scale money to internal precision
@@ -464,9 +480,13 @@ export class Money {
 		const scaledMoney = money.#minor * (INTERNAL_SCALE / currencyScale);
 
 		// Calculate: scaledMoney * scaledPercent / scaledHundred
-		const rawResult = scaledMoney * scaledPercent / scaledHundred;
+		const rawResult = (scaledMoney * scaledPercent) / scaledHundred;
 
-		const resultMinor = roundScaledToMinor(rawResult, money.#currency.decimalPlaces, rounding);
+		const resultMinor = roundScaledToMinor(
+			rawResult,
+			money.#currency.decimalPlaces,
+			rounding,
+		);
 		assertSafeResult(resultMinor);
 		return new Money(resultMinor, money.#currency);
 	}
@@ -478,7 +498,9 @@ export class Money {
 	): Money {
 		const { rounding = "round" } = options;
 
-		const scaledPercent = parseDecimalStringToScaled(numberToDecimalString(percent));
+		const scaledPercent = parseDecimalStringToScaled(
+			numberToDecimalString(percent),
+		);
 		const scaledHundred = 100n * INTERNAL_SCALE;
 
 		// Scale money to internal precision
@@ -486,9 +508,14 @@ export class Money {
 		const scaledMoney = money.#minor * (INTERNAL_SCALE / currencyScale);
 
 		// Calculate: scaledMoney * (100 + percent) / 100
-		const rawResult = scaledMoney * (scaledHundred + scaledPercent) / scaledHundred;
+		const rawResult =
+			(scaledMoney * (scaledHundred + scaledPercent)) / scaledHundred;
 
-		const resultMinor = roundScaledToMinor(rawResult, money.#currency.decimalPlaces, rounding);
+		const resultMinor = roundScaledToMinor(
+			rawResult,
+			money.#currency.decimalPlaces,
+			rounding,
+		);
 		assertSafeResult(resultMinor);
 		return new Money(resultMinor, money.#currency);
 	}
@@ -500,7 +527,9 @@ export class Money {
 	): Money {
 		const { rounding = "round" } = options;
 
-		const scaledPercent = parseDecimalStringToScaled(numberToDecimalString(percent));
+		const scaledPercent = parseDecimalStringToScaled(
+			numberToDecimalString(percent),
+		);
 		const scaledHundred = 100n * INTERNAL_SCALE;
 
 		// Scale money to internal precision
@@ -508,9 +537,14 @@ export class Money {
 		const scaledMoney = money.#minor * (INTERNAL_SCALE / currencyScale);
 
 		// Calculate: scaledMoney * (100 - percent) / 100
-		const rawResult = scaledMoney * (scaledHundred - scaledPercent) / scaledHundred;
+		const rawResult =
+			(scaledMoney * (scaledHundred - scaledPercent)) / scaledHundred;
 
-		const resultMinor = roundScaledToMinor(rawResult, money.#currency.decimalPlaces, rounding);
+		const resultMinor = roundScaledToMinor(
+			rawResult,
+			money.#currency.decimalPlaces,
+			rounding,
+		);
 		assertSafeResult(resultMinor);
 		return new Money(resultMinor, money.#currency);
 	}
