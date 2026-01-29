@@ -25,6 +25,24 @@ price.toNumber(); // 12.34
 price.currency;   // Currency.USD
 ```
 
+## Development
+
+```bash
+bun install     # install dependencies
+bun test        # run tests
+bun run build   # build for distribution
+bun run check   # format and lint
+```
+
+## Releasing
+
+```bash
+./scripts/release.sh           # bump prerelease (0.0.1-alpha.4 → 0.0.1-alpha.5)
+./scripts/release.sh patch     # bump patch (0.0.1 → 0.0.2)
+./scripts/release.sh minor     # bump minor (0.0.1 → 0.1.0)
+./scripts/release.sh major     # bump major (0.0.1 → 1.0.0)
+```
+
 ## License
 
 MIT
