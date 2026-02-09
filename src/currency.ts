@@ -18,3 +18,13 @@ export const Currency = {
 
 export type CurrencyCode = keyof typeof Currency;
 export type CurrencyType = (typeof Currency)[CurrencyCode];
+
+export function defineCurrency(code: string, decimalPlaces: number): CurrencyDefinition {
+	if (!code || typeof code !== "string") {
+		throw new Error("Currency code must be a non-empty string");
+	}
+	if (!Number.isInteger(decimalPlaces) || decimalPlaces < 0) {
+		throw new Error("Decimal places must be a non-negative integer");
+	}
+	return Object.freeze({ code, decimalPlaces });
+}

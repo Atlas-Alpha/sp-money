@@ -1,4 +1,4 @@
-import type { CurrencyType } from "./currency";
+import type { CurrencyDefinition } from "./currency";
 
 export type RoundingMode = "floor" | "ceil" | "round" | "trunc";
 
@@ -115,8 +115,8 @@ function roundScaledToMinor(
 }
 
 function assertCurrenciesMatch(
-	a: CurrencyType,
-	b: CurrencyType,
+	a: CurrencyDefinition,
+	b: CurrencyDefinition,
 	operation: string,
 ): void {
 	if (a.code !== b.code || a.decimalPlaces !== b.decimalPlaces) {
@@ -137,19 +137,19 @@ function assertSafeResult(value: bigint): void {
 
 export class Money {
 	readonly #minor: bigint;
-	readonly #currency: CurrencyType;
+	readonly #currency: CurrencyDefinition;
 
-	private constructor(minor: bigint, currency: CurrencyType) {
+	private constructor(minor: bigint, currency: CurrencyDefinition) {
 		this.#minor = minor;
 		this.#currency = currency;
 	}
 
-	get currency(): CurrencyType {
+	get currency(): CurrencyDefinition {
 		return this.#currency;
 	}
 
 	static fromNumber(
-		currency: CurrencyType,
+		currency: CurrencyDefinition,
 		value: number,
 		options: FromNumberOptions = {},
 	): Money {
@@ -188,7 +188,7 @@ export class Money {
 		return new Money(minor, currency);
 	}
 
-	static fromMinor(currency: CurrencyType, minor: number): Money {
+	static fromMinor(currency: CurrencyDefinition, minor: number): Money {
 		return new Money(BigInt(minor), currency);
 	}
 
@@ -349,7 +349,7 @@ export class Money {
 
 	static convert(
 		money: Money,
-		targetCurrency: CurrencyType,
+		targetCurrency: CurrencyDefinition,
 		rate: number,
 		options: { rounding?: RoundingMode } = {},
 	): Money {
@@ -379,7 +379,7 @@ export class Money {
 	}
 
 	convert(
-		targetCurrency: CurrencyType,
+		targetCurrency: CurrencyDefinition,
 		rate: number,
 		options?: { rounding?: RoundingMode },
 	): Money {
