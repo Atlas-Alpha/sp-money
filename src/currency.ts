@@ -19,7 +19,10 @@ export const Currency = {
 export type CurrencyCode = keyof typeof Currency;
 export type CurrencyType = (typeof Currency)[CurrencyCode];
 
-export function defineCurrency(code: string, decimalPlaces: number): CurrencyDefinition {
+export function defineCurrency(
+	code: string,
+	decimalPlaces: number,
+): CurrencyDefinition {
 	if (!code || typeof code !== "string") {
 		throw new Error("Currency code must be a non-empty string");
 	}

@@ -1,5 +1,5 @@
-import { test, expect } from "bun:test";
-import { Currency, Money, defineCurrency } from "../src";
+import { expect, test } from "bun:test";
+import { Currency, defineCurrency, Money } from "../src";
 
 test("defineCurrency creates a valid currency definition", () => {
 	const gold = defineCurrency("XAU", 4);
@@ -13,15 +13,21 @@ test("defineCurrency returns a frozen object", () => {
 });
 
 test("defineCurrency throws on empty code", () => {
-	expect(() => defineCurrency("", 2)).toThrow("Currency code must be a non-empty string");
+	expect(() => defineCurrency("", 2)).toThrow(
+		"Currency code must be a non-empty string",
+	);
 });
 
 test("defineCurrency throws on negative decimalPlaces", () => {
-	expect(() => defineCurrency("XAU", -1)).toThrow("Decimal places must be a non-negative integer");
+	expect(() => defineCurrency("XAU", -1)).toThrow(
+		"Decimal places must be a non-negative integer",
+	);
 });
 
 test("defineCurrency throws on non-integer decimalPlaces", () => {
-	expect(() => defineCurrency("XAU", 2.5)).toThrow("Decimal places must be a non-negative integer");
+	expect(() => defineCurrency("XAU", 2.5)).toThrow(
+		"Decimal places must be a non-negative integer",
+	);
 });
 
 test("Money.fromNumber works with custom currency", () => {
