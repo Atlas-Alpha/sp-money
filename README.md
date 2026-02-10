@@ -9,41 +9,24 @@ Safe, consistent, deterministic money operations.
 
 ## Install
 
-Package name: `@atlas-alpha/sp-money`
-
-### Current publish target
-
-This package is currently configured for GitHub Packages.
-
 ```bash
 # npm
-npm install @atlas-alpha/sp-money
+npm install @storepass/money
 
 # pnpm
-pnpm add @atlas-alpha/sp-money
+pnpm add @storepass/money
 
 # yarn
-yarn add @atlas-alpha/sp-money
+yarn add @storepass/money
 
 # bun
-bun add @atlas-alpha/sp-money
+bun add @storepass/money
 ```
-
-If your org requires explicit registry config:
-
-```ini
-# .npmrc
-@atlas-alpha:registry=https://npm.pkg.github.com
-```
-
-### Open-source transition
-
-The project is being prepared for a public open-source release.
 
 ## Quick Start
 
 ```ts
-import { Currency, Money } from "@atlas-alpha/sp-money";
+import { Currency, Money } from "@storepass/money";
 
 const price = Money.fromMinor(Currency.USD, 1234); // $12.34
 const fee = Money.fromNumber(Currency.USD, 1.25);
@@ -59,7 +42,7 @@ console.log(total.currency.code); // "USD"
 ### Money creation
 
 ```ts
-import { Currency, Money } from "@atlas-alpha/sp-money";
+import { Currency, Money } from "@storepass/money";
 
 Money.fromMinor(Currency.USD, 1234); // $12.34
 Money.fromNumber(Currency.USD, 12.345, { rounding: "round" }); // $12.35
@@ -112,7 +95,7 @@ subtotal.decrementByPercent(10).toNumber(); // 90
 ### Custom currencies
 
 ```ts
-import { defineCurrency, Money } from "@atlas-alpha/sp-money";
+import { defineCurrency, Money } from "@storepass/money";
 
 const XAU = defineCurrency("XAU", 4);
 const gold = Money.fromNumber(XAU, 1.2345);

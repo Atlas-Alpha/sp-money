@@ -36,11 +36,11 @@
 	"author": "darling (https://github.com/darling)",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/Atlas-Alpha/sp-money"
+		"url": "https://github.com/storepass/sp-money"
 	},
-	"homepage": "https://github.com/Atlas-Alpha/sp-money#readme",
+	"homepage": "https://github.com/storepass/sp-money#readme",
 	"bugs": {
-		"url": "https://github.com/Atlas-Alpha/sp-money/issues"
+		"url": "https://github.com/storepass/sp-money/issues"
 	},
 	"keywords": [
 		"money",
