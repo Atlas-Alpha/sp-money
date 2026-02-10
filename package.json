@@ -32,6 +32,21 @@
 		"lint": "biome lint .",
 		"lint:fix": "biome lint --write ."
 	},
+	"license": "MIT",
+	"author": "darling (https://github.com/darling)",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Atlas-Alpha/sp-money"
+	},
+	"homepage": "https://github.com/Atlas-Alpha/sp-money#readme",
+	"bugs": {
+		"url": "https://github.com/Atlas-Alpha/sp-money/issues"
+	},
+	"keywords": [
+		"money",
+		"currency",
+		"finance"
+	],
 	"engines": {
 		"node": ">=16"
 	},
