@@ -1,5 +1,5 @@
 {
-	"name": "@atlas-alpha/sp-money",
+	"name": "@storepass/money",
 	"version": "0.0.1-alpha.5",
 	"description": "Money primitive library",
 	"main": "./dist/index.cjs",
@@ -36,7 +36,8 @@
 		"node": ">=16"
 	},
 	"publishConfig": {
-		"registry": "https://npm.pkg.github.com"
+		"registry": "https://registry.npmjs.org",
+		"access": "public"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.3.11",
