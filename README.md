@@ -111,6 +111,49 @@ const json = m.toJSON();
 
 `amount` is always in minor units.
 
+### Display formatting
+
+`Money#format` wraps `Intl.NumberFormat`, honoring the currency's
+`decimalPlaces` and gracefully degrading for non-ISO codes.
+
+```ts
+Money.fromNumber(Currency.USD, 1234.5).format("en-US"); // "$1,234.50"
+Money.fromNumber(Currency.EUR, 1234.56).format("de-DE"); // "1.234,56 €"
+Money.fromNumber(Currency.JPY, 1500).format("en-US"); // "¥1,500"
+Money.fromNumber(Currency.BTC, 0.12345678).format("en-US"); // "BTC 0.12345678"
+```
+
+For non-ISO codes, you can supply a `displayCode` so `Intl` still renders a
+proper currency symbol while arithmetic precision is preserved separately:
+
+```ts
+const USDH = defineCurrency("USDH", 3, { displayCode: "USD" });
+Money.fromNumber(USDH, 12.345).format("en-US"); // "$12.345"
+```
+
+## ISO 4217 compatibility
+
+Standard currencies in `Currency` carry `numericCode` and `iso4217: true`.
+Custom assets (e.g., `BTC`, `USDH`) are flagged `iso4217: false`. When
+defining your own, pass the metadata explicitly:
+
+```ts
+const SLE = defineCurrency("SLE", 2, { numericCode: 925, iso4217: true });
+const XAU = defineCurrency("XAU", 4); // non-monetary, no ISO flags
+```
+
+`defineCurrency` validates `iso4217` codes against `/^[A-Z]{3}$/` and
+requires a numeric code in `0..999`.
+
+### Staying compliant
+
+ISO 4217 is amended a few times per year by SIX Interbank Clearing
+(deprecations, redenominations, occasional additions). The hardcoded list
+in [src/currency.ts](./src/currency.ts) tracks a pinned revision (see the
+header comment). To stay current, periodically diff against the
+[official XML list](https://www.six-group.com/en/products-services/financial-information/data-standards.html)
+and update both `decimalPlaces` and `numericCode` for any drift.
+
 ## Notes and Guarantees
 
 - Currency mismatch operations throw (for example, adding USD to EUR).

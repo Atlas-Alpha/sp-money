@@ -3,6 +3,7 @@ export {
 	type CurrencyCode,
 	type CurrencyDefinition,
 	type CurrencyType,
+	type DefineCurrencyOptions,
 	defineCurrency,
 } from "./currency";
 export { type FromNumberOptions, Money, type RoundingMode } from "./money";

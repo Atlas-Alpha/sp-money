@@ -7,6 +7,18 @@ export interface FromNumberOptions {
 	strict?: boolean;
 }
 
+type MoneyFormatOptions = Omit<
+	Intl.NumberFormatOptions,
+	"style" | "currency" | "minimumFractionDigits" | "maximumFractionDigits"
+> & {
+	minimumFractionDigits?: number;
+	maximumFractionDigits?: number;
+};
+
+type DecimalStringNumberFormat = Intl.NumberFormat & {
+	format(value: number | bigint | string): string;
+};
+
 // Internal precision for scaled integer arithmetic
 // 20 decimal places to handle rates like 0.00001080599586018141
 const INTERNAL_PRECISION = 20;
@@ -133,6 +145,45 @@ function assertSafeResult(value: bigint): void {
 	) {
 		throw new Error("Result too large: exceeds safe integer range");
 	}
+}
+
+function minorToDecimalString(minor: bigint, decimalPlaces: number): string {
+	const negative = minor < 0n;
+	const absMinor = negative ? -minor : minor;
+
+	if (decimalPlaces === 0) {
+		return `${negative ? "-" : ""}${absMinor}`;
+	}
+
+	const scale = 10n ** BigInt(decimalPlaces);
+	const whole = absMinor / scale;
+	const fraction = (absMinor % scale).toString().padStart(decimalPlaces, "0");
+
+	return `${negative ? "-" : ""}${whole}.${fraction}`;
+}
+
+function resolveFractionDigits(
+	decimalPlaces: number,
+	options: MoneyFormatOptions,
+): { minimumFractionDigits: number; maximumFractionDigits: number } {
+	const { minimumFractionDigits, maximumFractionDigits } = options;
+
+	return {
+		minimumFractionDigits:
+			minimumFractionDigits ??
+			(maximumFractionDigits === undefined
+				? decimalPlaces
+				: Math.min(decimalPlaces, maximumFractionDigits)),
+		maximumFractionDigits:
+			maximumFractionDigits ??
+			(minimumFractionDigits === undefined
+				? decimalPlaces
+				: Math.max(decimalPlaces, minimumFractionDigits)),
+	};
+}
+
+function formatExactDecimal(format: Intl.NumberFormat, value: string): string {
+	return (format as DecimalStringNumberFormat).format(value);
 }
 
 export class Money {
@@ -574,5 +625,59 @@ export class Money {
 			amount: this.toMinor(),
 			currency: this.#currency.code,
 		};
+	}
+
+	/**
+	 * Format this Money for display using `Intl.NumberFormat`.
+	 *
+	 * - For ISO 4217 currencies, uses `style: "currency"` with the standard code
+	 *   (or `displayCode` if provided), respecting the currency's
+	 *   `decimalPlaces` (overrides Intl's locale-default fraction digits).
+	 * - For non-ISO codes without a `displayCode`, falls back to a decimal
+	 *   format prefixed with the currency code (e.g., `"BTC 0.12345678"`).
+	 * - If a runtime rejects the currency code (older engines, exotic locales),
+	 *   the same decimal fallback is used.
+	 */
+	format(
+		locales?: string | string[],
+		options: MoneyFormatOptions = {},
+	): string {
+		const value = minorToDecimalString(
+			this.#minor,
+			this.#currency.decimalPlaces,
+		);
+		const dp = this.#currency.decimalPlaces;
+		const displayCode = this.#currency.displayCode ?? this.#currency.code;
+		const canUseCurrencyStyle =
+			this.#currency.iso4217 === true ||
+			this.#currency.displayCode !== undefined;
+
+		const fractionDigits = resolveFractionDigits(dp, options);
+
+		if (canUseCurrencyStyle) {
+			try {
+				return formatExactDecimal(
+					new Intl.NumberFormat(locales, {
+						...options,
+						...fractionDigits,
+						style: "currency",
+						currency: displayCode,
+					}),
+					value,
+				);
+			} catch {
+				// Fall through to decimal fallback
+			}
+		}
+
+		const number = formatExactDecimal(
+			new Intl.NumberFormat(locales, {
+				...options,
+				...fractionDigits,
+				style: "decimal",
+			}),
+			value,
+		);
+		return `${this.#currency.code} ${number}`;
 	}
 }
