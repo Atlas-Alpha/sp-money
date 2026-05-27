@@ -130,9 +130,9 @@ describe("Money", () => {
 				Money.fromNumber(Currency.USD, 20),
 			];
 			const sorted = [...items].sort(Money.compare);
-			expect(sorted[0].toNumber()).toBe(10);
-			expect(sorted[1].toNumber()).toBe(20);
-			expect(sorted[2].toNumber()).toBe(30);
+			expect(sorted[0]!.toNumber()).toBe(10);
+			expect(sorted[1]!.toNumber()).toBe(20);
+			expect(sorted[2]!.toNumber()).toBe(30);
 		});
 
 		test("handles JPY (0 decimal places) correctly", () => {

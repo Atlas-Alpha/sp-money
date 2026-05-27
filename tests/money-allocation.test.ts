@@ -9,8 +9,8 @@ describe("Money", () => {
 				const result = money.allocate(2);
 
 				expect(result).toHaveLength(2);
-				expect(result[0].toNumber()).toBe(5);
-				expect(result[1].toNumber()).toBe(5);
+				expect(result[0]!.toNumber()).toBe(5);
+				expect(result[1]!.toNumber()).toBe(5);
 			});
 
 			test("splits $10.00 evenly across 5 people", () => {
@@ -40,9 +40,9 @@ describe("Money", () => {
 				const result = money.allocate(3);
 
 				expect(result).toHaveLength(3);
-				expect(result[0].toNumber()).toBe(3.34);
-				expect(result[1].toNumber()).toBe(3.33);
-				expect(result[2].toNumber()).toBe(3.33);
+				expect(result[0]!.toNumber()).toBe(3.34);
+				expect(result[1]!.toNumber()).toBe(3.33);
+				expect(result[2]!.toNumber()).toBe(3.33);
 			});
 
 			test("splits $1.00 across 3 people: [$0.34, $0.33, $0.33]", () => {
@@ -50,9 +50,9 @@ describe("Money", () => {
 				const result = money.allocate(3);
 
 				expect(result).toHaveLength(3);
-				expect(result[0].toNumber()).toBe(0.34);
-				expect(result[1].toNumber()).toBe(0.33);
-				expect(result[2].toNumber()).toBe(0.33);
+				expect(result[0]!.toNumber()).toBe(0.34);
+				expect(result[1]!.toNumber()).toBe(0.33);
+				expect(result[2]!.toNumber()).toBe(0.33);
 			});
 
 			test("splits $0.01 across 3 people: [$0.01, $0.00, $0.00]", () => {
@@ -60,9 +60,9 @@ describe("Money", () => {
 				const result = money.allocate(3);
 
 				expect(result).toHaveLength(3);
-				expect(result[0].toNumber()).toBe(0.01);
-				expect(result[1].toNumber()).toBe(0);
-				expect(result[2].toNumber()).toBe(0);
+				expect(result[0]!.toNumber()).toBe(0.01);
+				expect(result[1]!.toNumber()).toBe(0);
+				expect(result[2]!.toNumber()).toBe(0);
 			});
 
 			test("splits 10 JPY across 3 people: [4, 3, 3]", () => {
@@ -70,9 +70,9 @@ describe("Money", () => {
 				const result = money.allocate(3);
 
 				expect(result).toHaveLength(3);
-				expect(result[0].toNumber()).toBe(4);
-				expect(result[1].toNumber()).toBe(3);
-				expect(result[2].toNumber()).toBe(3);
+				expect(result[0]!.toNumber()).toBe(4);
+				expect(result[1]!.toNumber()).toBe(3);
+				expect(result[2]!.toNumber()).toBe(3);
 			});
 
 			test("splits 1 BTC across 3 people with 8 decimal precision", () => {
@@ -82,9 +82,9 @@ describe("Money", () => {
 				expect(result).toHaveLength(3);
 				// 1 BTC = 100_000_000 satoshis
 				// 100_000_000 / 3 = 33_333_333 remainder 1
-				expect(result[0].toMinor()).toBe(33_333_334);
-				expect(result[1].toMinor()).toBe(33_333_333);
-				expect(result[2].toMinor()).toBe(33_333_333);
+				expect(result[0]!.toMinor()).toBe(33_333_334);
+				expect(result[1]!.toMinor()).toBe(33_333_333);
+				expect(result[2]!.toMinor()).toBe(33_333_333);
 			});
 		});
 
@@ -139,7 +139,7 @@ describe("Money", () => {
 				const result = money.allocate(1);
 
 				expect(result).toHaveLength(1);
-				expect(result[0].equals(money)).toBe(true);
+				expect(result[0]!.equals(money)).toBe(true);
 			});
 
 			test("allocate $0.00 across 3 people returns three $0.00", () => {
@@ -159,9 +159,9 @@ describe("Money", () => {
 				expect(result).toHaveLength(3);
 				// -1000 cents / 3 = -333 remainder -1
 				// Each gets -333, first gets extra -1 (so -334)
-				expect(result[0].toNumber()).toBe(-3.34);
-				expect(result[1].toNumber()).toBe(-3.33);
-				expect(result[2].toNumber()).toBe(-3.33);
+				expect(result[0]!.toNumber()).toBe(-3.34);
+				expect(result[1]!.toNumber()).toBe(-3.33);
+				expect(result[2]!.toNumber()).toBe(-3.33);
 			});
 
 			test("sum of negative allocation equals original", () => {
@@ -211,7 +211,7 @@ describe("Money", () => {
 
 				expect(staticResult).toHaveLength(instanceResult.length);
 				for (let i = 0; i < instanceResult.length; i++) {
-					expect(staticResult[i].equals(instanceResult[i])).toBe(true);
+					expect(staticResult[i]!.equals(instanceResult[i]!)).toBe(true);
 				}
 			});
 		});
