@@ -7,6 +7,12 @@ export interface FromNumberOptions {
 	strict?: boolean;
 }
 
+/** JSON-safe representation of a Money value. Amount is in minor units. */
+export interface SerializedMoney {
+	amount: number;
+	currency: string;
+}
+
 type MoneyFormatOptions = Omit<
 	Intl.NumberFormatOptions,
 	"style" | "currency" | "minimumFractionDigits" | "maximumFractionDigits"
@@ -620,7 +626,7 @@ export class Money {
 
 	// Serialization
 
-	toJSON(): { amount: number; currency: string } {
+	toJSON(): SerializedMoney {
 		return {
 			amount: this.toMinor(),
 			currency: this.#currency.code,

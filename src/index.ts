@@ -6,4 +6,9 @@ export {
 	type DefineCurrencyOptions,
 	defineCurrency,
 } from "./currency";
-export { type FromNumberOptions, Money, type RoundingMode } from "./money";
+export {
+	type FromNumberOptions,
+	Money,
+	type RoundingMode,
+	type SerializedMoney,
+} from "./money";

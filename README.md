@@ -111,6 +111,40 @@ const json = m.toJSON();
 
 `amount` is always in minor units.
 
+### Zod schemas and codecs
+
+Zod support is available from a separate entry point, so importing the core
+money primitives does not require Zod:
+
+```ts
+import { Currency, defineCurrency, Money } from "@storepass/money";
+import {
+  createMoneyCodec,
+  currencyDefinitionSchema,
+  moneyCodec,
+  moneyInstanceSchema,
+  moneySchema,
+} from "@storepass/money/zod";
+import { decode, encode } from "zod";
+
+const serialized = moneySchema.parse({ amount: 1234, currency: "USD" });
+const money = decode(moneyCodec, serialized);
+
+moneyInstanceSchema.parse(money); // Money
+encode(moneyCodec, money); // { amount: 1234, currency: "USD" }
+
+currencyDefinitionSchema.parse(Currency.USD);
+
+const XAU = defineCurrency("XAU", 4);
+const goldCodec = createMoneyCodec({ XAU });
+decode(goldCodec, { amount: 12345, currency: "XAU" });
+```
+
+`moneySchema` (also exported as `serializedMoneySchema`) accepts custom
+currency codes and validates that `amount` is a safe integer in minor units.
+`builtInSerializedMoneySchema` and `moneyCodec` restrict values to the
+currencies included in `Currency`.
+
 ### Display formatting
 
 `Money#format` wraps `Intl.NumberFormat`, honoring the currency's

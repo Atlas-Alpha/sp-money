@@ -15,6 +15,16 @@
 				"types": "./dist/index.d.ts",
 				"default": "./dist/index.cjs"
 			}
+		},
+		"./zod": {
+			"import": {
+				"types": "./dist/zod.d.ts",
+				"default": "./dist/zod.mjs"
+			},
+			"require": {
+				"types": "./dist/zod.d.ts",
+				"default": "./dist/zod.cjs"
+			}
 		}
 	},
 	"files": [
@@ -22,8 +32,8 @@
 	],
 	"scripts": {
 		"build": "bun run build:esm && bun run build:cjs && bun run build:types",
-		"build:esm": "bun build ./src/index.ts --outfile ./dist/index.mjs --format esm --target node",
-		"build:cjs": "bun build ./src/index.ts --outfile ./dist/index.cjs --format cjs --target node",
+		"build:esm": "bun build ./src/index.ts --outfile ./dist/index.mjs --format esm --target node && bun build ./src/zod.ts --outfile ./dist/zod.mjs --format esm --target node --external '@storepass/money' --external zod",
+		"build:cjs": "bun build ./src/index.ts --outfile ./dist/index.cjs --format cjs --target node && bun build ./src/zod.ts --outfile ./dist/zod.cjs --format cjs --target node --external '@storepass/money' --external zod",
 		"build:types": "tsc -p tsconfig.build.json",
 		"test": "bun test",
 		"typecheck": "tsc --noEmit",
@@ -54,9 +64,18 @@
 		"registry": "https://registry.npmjs.org",
 		"access": "public"
 	},
+	"peerDependencies": {
+		"zod": "^4.1.0"
+	},
+	"peerDependenciesMeta": {
+		"zod": {
+			"optional": true
+		}
+	},
 	"devDependencies": {
 		"@biomejs/biome": "2.3.11",
 		"@types/bun": "latest",
-		"typescript": "^5.9.3"
+		"typescript": "^5.9.3",
+		"zod": "^4.4.3"
 	}
 }
